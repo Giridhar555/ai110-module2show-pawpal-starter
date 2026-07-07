@@ -4,13 +4,13 @@
 
 **a. Initial design**
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+- The initial design centers on five core classes: Owner, Pet, Task, ScheduledTask, and Scheduler.
+- Owner stores the daily time budget and preferences, Pet represents the animal being cared for, Task captures a care action, ScheduledTask records the assigned time slot, and Scheduler turns tasks into a daily plan.
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+- The design stayed mostly consistent, but I refined how tasks are ordered so that equal-priority tasks keep the original input order after sorting by time preference.
+- This change made the scheduling behavior more predictable and aligned with the tests.
 
 ---
 
@@ -18,13 +18,14 @@
 
 **a. Constraints and priorities**
 
-- What constraints does your scheduler consider (for example: time, priority, preferences)?
-- How did you decide which constraints mattered most?
+- The scheduler considers task priority, preferred start hour, total available daily minutes, and conflicts between overlapping tasks.
+- Priority mattered most because it reflects urgency, while time availability and start preferences influence when a task is placed.
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+- One tradeoff is that the scheduler favors important tasks first and may leave lower-priority items unscheduled when time runs out.
+- It also only flags exact start-time conflicts, rather than checking for overlapping durations, which keeps the logic lightweight and easy to reason about.
+- That tradeoff is reasonable for a pet-care assistant because urgent routines such as medication should be protected before optional tasks.
 
 ---
 
@@ -32,13 +33,16 @@
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+- I used AI to brainstorm the class structure, generate the initial backend skeleton, and refine the Streamlit connection.
+- The most helpful prompts were ones that asked for Python class designs, test cases, and UI integration steps.
+- The most effective AI features were rapid code generation, test drafting, and quick explanation of unfamiliar Python patterns.
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+- I did not accept the first scheduling suggestion as-is because it did not preserve the intended task order in tie cases.
+- I verified the behavior by writing tests for priority ordering, available-time limits, and conflict handling.
+- I also used separate chat sessions for implementation and testing so that each phase stayed focused and easier to review.
+- A good example of human oversight was rejecting an overly complex conflict-detection approach in favor of a lightweight warning system that was easier to understand and maintain.
 
 ---
 
@@ -46,13 +50,13 @@
 
 **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+- I tested that high-priority tasks appear before lower-priority tasks, that tasks which do not fit are skipped, and that tasks with conflicts are scheduled into later open slots.
+- These tests are important because they protect the core scheduling logic from regressions.
 
 **b. Confidence**
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+- I am moderately confident that the current scheduler works correctly for the core scenarios covered by the tests.
+- If I had more time, I would add tests for recurring tasks across multiple days and for very long task lists.
 
 ---
 
@@ -60,12 +64,12 @@
 
 **a. What went well**
 
-- What part of this project are you most satisfied with?
+- I am most satisfied with the way the backend, tests, and UI now fit together into one working demo.
 
 **b. What you would improve**
 
-- If you had another iteration, what would you improve or redesign?
+- I would add richer task categories, owner preferences, and a more advanced scheduler that can suggest better placement around recurring routines.
 
 **c. Key takeaway**
 
-- What is one important thing you learned about designing systems or working with AI on this project?
+- One important lesson was that a strong system design is easier to implement and verify when the data model and test cases are aligned from the start.

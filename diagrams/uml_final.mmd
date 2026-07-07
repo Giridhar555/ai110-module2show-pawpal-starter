@@ -5,6 +5,9 @@ classDiagram
         +preferred_start_hour: int
         +preferred_end_hour: int
         +preferences: List[str]
+        +pets: List[Pet]
+        +add_pet(pet: Pet) void
+        +get_all_tasks() List[Task]
     }
 
     class Pet {
@@ -13,6 +16,8 @@ classDiagram
         +owner: Owner
         +age_years: Optional[int]
         +notes: str
+        +tasks: List[Task]
+        +add_task(task: Task) void
     }
 
     class Task {
@@ -23,7 +28,12 @@ classDiagram
         +preferred_start_hour: Optional[int]
         +recurring: bool
         +notes: str
+        +completed: bool
+        +frequency: str
+        +due_date: Optional[date]
+        +pet_name: Optional[str]
         +priority_score() int
+        +mark_complete() Optional[Task]
     }
 
     class ScheduledTask {
@@ -36,18 +46,25 @@ classDiagram
     class DailyPlan {
         +scheduled_tasks: List[ScheduledTask]
         +unscheduled_tasks: List[Task]
+        +owner: Owner
+        +pet: Pet
+        +day_start_hour: int
+        +day_end_hour: int
         +total_scheduled_minutes: int
     }
 
     class Scheduler {
         +day_start_hour: int
         +day_end_hour: int
-        +build_daily_plan() DailyPlan
-        +explain_plan() List[str]
+        +sort_by_time(tasks: List[Task]) List[Task]
+        +filter_tasks(tasks: List[Task], pet_name: Optional[str], completed: Optional[bool]) List[Task]
+        +detect_conflicts(scheduled_tasks: List[ScheduledTask]) List[str]
+        +build_daily_plan(owner: Owner, pet: Pet, tasks: List[Task]) DailyPlan
+        +explain_plan(plan: DailyPlan) List[str]
     }
 
     Owner "1" --> "0..*" Pet : owns
-    Pet "1" --> "0..*" Task : may include
+    Pet "1" --> "0..*" Task : contains
     Task --> ScheduledTask : becomes
     DailyPlan --> ScheduledTask : contains
     DailyPlan --> Task : tracks unscheduled
