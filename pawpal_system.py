@@ -53,6 +53,7 @@ class Task:
     frequency: str = "once"
     due_date: Optional[date] = None
     pet_name: Optional[str] = None
+    ai_priority: float = 0.0
 
     def priority_score(self) -> int:
         """Return a numeric score for the task priority."""
@@ -165,6 +166,7 @@ class Scheduler:
                 ordered_tasks,
                 key=lambda item: (
                     -item[1].priority_score(),
+                    -item[1].ai_priority,
                     item[1].preferred_start_hour is None,
                     item[1].preferred_start_hour if item[1].preferred_start_hour is not None else 99,
                     item[0],
@@ -274,6 +276,93 @@ class Scheduler:
         hours = total_minutes // 60
         minutes = total_minutes % 60
         return f"{hours:02d}:{minutes:02d}"
+
+
+class CareKnowledgeBase:
+    def __init__(self) -> None:
+        self.guidance = {
+            "medication": "Medication tasks should be scheduled at consistent times and prioritized to avoid missed doses.",
+            "feeding": "Regular feeding supports pet health; keep feeding tasks early and predictable.",
+            "walk": "Walks help pets stay active, but they can often be shifted later if urgent care is needed first.",
+            "grooming": "Grooming is important for comfort and can be scheduled after higher-priority tasks.",
+            "training": "Short training sessions are useful when there is a gap in the schedule.",
+        }
+
+    def retrieve(self, category: str) -> str:
+        return self.guidance.get(category.lower(), "Use this task to improve pet care consistency.")
+
+
+class PetCarePlanner:
+    def __init__(self, scheduler: Optional[Scheduler] = None, knowledge_base: Optional[CareKnowledgeBase] = None) -> None:
+        self.scheduler = scheduler or Scheduler()
+        self.knowledge_base = knowledge_base or CareKnowledgeBase()
+        self.trace: List[str] = []
+
+    def plan(self, owner: Owner, pet: Pet, tasks: List[Task]) -> tuple[DailyPlan, List[str], float]:
+        self.trace.clear()
+        self._record(f"Starting planning for {pet.name} with {len(tasks)} task(s).")
+        self._apply_knowledge_boost(tasks)
+
+        plan = self.scheduler.build_daily_plan(owner, pet, tasks)
+        self._record(f"Built initial plan with {len(plan.scheduled_tasks)} scheduled tasks and {len(plan.unscheduled_tasks)} skipped tasks.")
+
+        conflicts = self.scheduler.detect_conflicts(plan.scheduled_tasks)
+        if conflicts:
+            self._record("Detected conflicts in the initial plan, applying resolution steps.")
+            for warning in conflicts:
+                self._record(warning)
+            plan = self._resolve_conflicts(owner, pet, tasks)
+        else:
+            self._record("No conflicts detected in the initial plan.")
+
+        confidence = self.confidence_score(plan)
+        self._record(f"Final confidence score: {confidence:.2f}")
+        return plan, list(self.trace), confidence
+
+    def confidence_score(self, plan: DailyPlan) -> float:
+        total_tasks = len(plan.scheduled_tasks) + len(plan.unscheduled_tasks)
+        if total_tasks == 0:
+            return 1.0
+        scheduled_ratio = len(plan.scheduled_tasks) / total_tasks
+        return max(0.0, min(1.0, scheduled_ratio - 0.1 * len(self.scheduler.detect_conflicts(plan.scheduled_tasks))))
+
+    def _apply_knowledge_boost(self, tasks: List[Task]) -> None:
+        for task in tasks:
+            guidance = self.knowledge_base.retrieve(task.category)
+            self._record(f"Retrieved guidance for '{task.title}' ({task.category}): {guidance}")
+            task.ai_priority = self._category_boost(task)
+            if task.ai_priority > 0:
+                self._record(f"Applied knowledge boost of {task.ai_priority:.1f} to '{task.title}'.")
+
+    def _category_boost(self, task: Task) -> float:
+        category = task.category.lower()
+        if category == "medication":
+            return 1.0
+        if category == "feeding":
+            return 0.7
+        if category == "walk":
+            return 0.5
+        if category == "grooming":
+            return 0.3
+        return 0.0
+
+    def _resolve_conflicts(self, owner: Owner, pet: Pet, tasks: List[Task]) -> DailyPlan:
+        for task in tasks:
+            if task.category.lower() == "medication":
+                task.ai_priority += 0.2
+        self._record("Increased medication priority to help the planner resolve conflicts.")
+        plan = self.scheduler.build_daily_plan(owner, pet, tasks)
+        conflicts = self.scheduler.detect_conflicts(plan.scheduled_tasks)
+        if conflicts:
+            self._record("Conflicts remain after adjustment. Falling back to the original schedule and preserving task order.")
+            for warning in conflicts:
+                self._record(warning)
+        else:
+            self._record("Conflict resolution succeeded.")
+        return plan
+
+    def _record(self, message: str) -> None:
+        self.trace.append(message)
 
 
 if __name__ == "__main__":

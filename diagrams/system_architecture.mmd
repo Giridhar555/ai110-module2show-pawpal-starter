@@ -1,0 +1,15 @@
+flowchart TB
+    User["User / pet owner"] --> UI["Streamlit UI \n(app.py)"]
+    UI --> Planner["PetCarePlanner\n(ai planner, trace, confidence)"]
+    Planner --> Scheduler["Scheduler\n(task ordering, time slot search)"]
+    Scheduler --> DailyPlan["DailyPlan\n(scheduled + unscheduled tasks)"]
+    Planner --> Knowledge["CareKnowledgeBase\n(task category guidance)"]
+    UI -->|view plan| DailyPlan
+    UI -->|show trace| Planner
+    Tests["Automated tests"] --> Planner
+    Tests --> Scheduler
+    Tests --> Task
+    subgraph Storage
+        Owner["Owner / pets / tasks data model"]
+    end
+    Planner --> Owner

@@ -1,24 +1,42 @@
-# PawPal+ (Module 2 Project)
+# PawPal+ Applied AI Pet Care Planner
 
-PawPal+ is a Streamlit app that helps a pet owner plan daily care tasks for one or more pets. The backend uses Python classes and a simple scheduling algorithm to prioritize important routines, avoid conflicts, and explain why a task made it into the plan.
+PawPal+ started as a Module 2 project for planning pet care tasks with a simple scheduler. This submission extends that prototype into an applied AI system by adding an AI-style planning component that retrieves task guidance, boosts task priority based on category, resolves scheduling conflicts, and reports confidence and traceable reasoning.
 
-## Features
+## What this project does
 
-- Lets a user enter owner and pet information.
-- Lets a user add care tasks with duration, priority, and preferred start times.
-- Builds a daily schedule based on time limits and priority.
-- Sorts tasks by preferred start time and filters them by pet or completion status.
-- Warns about conflicts when two tasks share the same start time.
-- Supports daily or weekly recurring tasks that create a follow-up occurrence after completion.
-- Includes automated tests for core scheduling behavior.
+PawPal+ helps a pet owner manage and schedule daily care tasks across one or more pets. The system now includes:
+
+- A Streamlit interface for entering owner details, pets, and care tasks.
+- An AI-enhanced planner that uses task categories and knowledge retrieval to prioritize medication, feeding, walks, and grooming.
+- Traceable reasoning and confidence scoring so users can understand why the plan was chosen.
+- A scheduler that builds a daily plan within the owner's available minutes and flags conflicts.
+
+## Original project summary
+
+This project began as a pet-care scheduling assistant from Module 2. Its original goal was to model owners, pets, and care tasks, then turn tasks into a daily plan while avoiding conflicts and honoring preferred start times.
+
+## Architecture overview
+
+The system has three main components:
+
+1. `app.py` — Streamlit UI for user input and plan display.
+2. `pawpal_system.py` — backend data model, scheduling engine, knowledge retriever, and planner.
+3. `tests/` — automated tests that verify both scheduler correctness and AI planner behavior.
+
+The new `PetCarePlanner` integrates a lightweight knowledge base and a planner workflow to make the scheduler more intelligent and explainable.
+
+See the system diagram: [diagrams/system_architecture.mmd](diagrams/system_architecture.mmd)
 
 ## Project structure
 
-- [app.py](app.py) — the Streamlit UI.
-- [pawpal_system.py](pawpal_system.py) — the backend model and scheduler.
-- [tests/test_pawpal.py](tests/test_pawpal.py) — automated tests for core behaviors.
-- [tests/test_pawpal_system.py](tests/test_pawpal_system.py) — additional scheduler tests.
-- [diagrams/uml_final.mmd](diagrams/uml_final.mmd) — final Mermaid UML diagram.
+- `app.py` — Streamlit interface with task guidance and planner trace output.
+- `main.py` — CLI demo for the planner and scheduler.
+- `pawpal_system.py` — data model, scheduler, knowledge base, and AI planner.
+- `tests/test_pawpal.py` — core behavior tests for tasks, pets, and scheduler utilities.
+- `tests/test_pawpal_system.py` — additional scheduler tests.
+- `tests/test_pawpal_planner.py` — planner-specific tests and reliability checks.
+- `diagrams/system_architecture.mmd` — architecture and data-flow diagram.
+- `model_card.md` — responsible AI reflection and limitations.
 
 ## Setup
 
@@ -34,64 +52,82 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-## Sample output
-
-```text
-Today's Schedule
-====================
-08:00 — Morning walk (30 min, high priority)
-08:30 — Medication (15 min, high priority)
-08:45 — Brushing (12 min, medium priority)
-09:00 — Feeding (10 min, high priority)
-```
-
-## Smarter Scheduling
-
-- Sorting behavior: Scheduler.sort_by_time() orders tasks by preferred start hour and title.
-- Filtering behavior: Scheduler.filter_tasks() filters tasks by pet name and completion status.
-- Conflict detection logic: Scheduler.detect_conflicts() warns when two tasks share the same start time.
-- Recurring task logic: Task.mark_complete() creates the next occurrence for daily or weekly tasks.
-
-## Testing PawPal+
-
-Run the automated test suite with:
+or run the CLI demo:
 
 ```bash
-python3 -m pytest
+python main.py
 ```
 
-The tests cover:
-- task completion updates
-- task addition on pets
-- sorting by preferred start time
-- filtering by pet and completion status
-- recurring-task follow-up behavior
-- conflict detection for duplicate start times
+## Sample interactions
 
-Sample output:
-
-```text
-..........
-9 passed in 0.01s
-```
-
-Confidence level: ⭐⭐⭐⭐⭐
-
-## Demo walkthrough
-
-1. Open the app in Streamlit and enter owner and pet details.
-2. Add one or more pets and then add care tasks with durations, priorities, and preferred start times.
-3. Review the sorted task list and incomplete-task summary shown for the active pet.
-4. Click Generate schedule to create a daily plan, view the planned tasks, and read the scheduler explanation.
-5. If a conflict is detected, the app shows a warning so the owner can adjust the plan.
-
-Sample CLI output from running main.py:
+### 1. Planner output for medication and walk
 
 ```text
 Today's Schedule
 ====================
-08:00 — Morning walk (30 min, high priority)
-08:30 — Medication (15 min, high priority)
-08:45 — Brushing (12 min, medium priority)
-09:00 — Feeding (10 min, high priority)
+08:00 — Medication (15 min, high priority)
+08:15 — Morning walk (30 min, medium priority)
+
+Planner confidence: 0.90
+
+- Starting planning for Mochi with 2 task(s).
+- Retrieved guidance for 'Medication' (medication): Medication tasks should be scheduled at consistent times and prioritized to avoid missed doses.
+- Applied knowledge boost of 1.0 to 'Medication'.
+- Retrieved guidance for 'Morning walk' (walk): Walks help pets stay active, but they can often be shifted later if urgent care is needed first.
+- Applied knowledge boost of 0.5 to 'Morning walk'.
+- Built initial plan with 2 scheduled tasks and 0 skipped tasks.
+- No conflicts detected in the initial plan.
+- Final confidence score: 0.90
 ```
+
+### 2. Skipping a task when time is limited
+
+```text
+Skipped tasks due to time limits or conflicts:
+- Long grooming
+```
+
+## AI feature
+
+This project includes an agentic planning workflow with:
+
+- Retrieval from a small knowledge base (`CareKnowledgeBase`).
+- Category-based priority boosts for medication, feeding, walk, and grooming tasks.
+- Conflict detection and a secondary resolution pass that increases medication priority.
+- Confidence scoring based on schedule coverage and conflict warnings.
+
+## Reliability and evaluation
+
+The system is tested with automated unit tests. Key reliability checks include:
+
+- Planner applies category-based boosts and retrieves task guidance.
+- Scheduling keeps high-priority tasks earlier when possible.
+- Tasks that cannot fit within the owner's available minutes are skipped.
+- Confidence is calculated and reported alongside the plan.
+
+Test command:
+
+```bash
+python -m pytest
+```
+
+Test result:
+
+```text
+11 passed in 0.02s
+```
+
+## Design decisions
+
+- I kept the AI component lightweight so the system remains reproducible without external APIs.
+- Categories are used as domain knowledge, which helps the planner make more reasonable trade-offs without requiring a full NLP model.
+- The planner trace adds transparency and makes scheduling decisions easier to trust.
+
+## What I learned
+
+This project showed me how a small AI workflow can improve a deterministic scheduler by adding knowledge-based task prioritization, traceable reasoning, and confidence scoring. It also reinforced the importance of documenting both the system architecture and the reliability tests for an applied AI portfolio entry.
+
+## Notes
+
+- `model_card.md` contains the formal responsible AI reflection on limitations, bias, misuse, and AI collaboration.
+- `diagrams/system_architecture.mmd` contains the architecture source used for the system diagram.

@@ -1,6 +1,6 @@
 from datetime import date
 
-from pawpal_system import Owner, Pet, Scheduler, ScheduledTask, Task
+from pawpal_system import CareKnowledgeBase, Owner, Pet, PetCarePlanner, ScheduledTask, Task
 
 
 def main() -> None:
@@ -16,20 +16,25 @@ def main() -> None:
     pet2.add_task(Task(title="Medication", duration_minutes=15, priority="high", category="medication", preferred_start_hour=8, pet_name=pet2.name))
     pet2.add_task(Task(title="Brushing", duration_minutes=12, priority="medium", category="grooming", recurring=True, pet_name=pet2.name))
 
-    scheduler = Scheduler(day_start_hour=8, day_end_hour=20)
-    plan = scheduler.build_daily_plan(owner, pet1, owner.get_all_tasks())
+    planner = PetCarePlanner(knowledge_base=CareKnowledgeBase())
+    plan, trace, confidence = planner.plan(owner, pet1, owner.get_all_tasks())
 
     print("Today's Schedule")
     print("=" * 20)
-    for item in scheduler.explain_plan(plan):
+    for item in planner.scheduler.explain_plan(plan):
         print(item)
 
+    print(f"\nPlanner confidence: {confidence:.2f}")
+    print("\nPlanner trace:")
+    for line in trace:
+        print(f"- {line}")
+
     print("\nSorted by time:")
-    for task in scheduler.sort_by_time(owner.get_all_tasks()):
+    for task in planner.scheduler.sort_by_time(owner.get_all_tasks()):
         print(f"- {task.title} @ {task.preferred_start_hour}:00")
 
     print("\nFiltered for Mochi, incomplete tasks:")
-    for task in scheduler.filter_tasks(owner.get_all_tasks(), pet_name="Mochi", completed=False):
+    for task in planner.scheduler.filter_tasks(owner.get_all_tasks(), pet_name="Mochi", completed=False):
         print(f"- {task.title}")
 
     recurring_task = Task(title="Pill", duration_minutes=5, priority="high", frequency="daily", due_date=date(2026, 7, 7), pet_name=pet2.name)

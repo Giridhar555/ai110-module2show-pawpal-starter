@@ -1,6 +1,6 @@
 import streamlit as st
 
-from pawpal_system import DailyPlan, Owner, Pet, Scheduler, Task
+from pawpal_system import CareKnowledgeBase, DailyPlan, Owner, Pet, PetCarePlanner, Scheduler, Task
 
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
 
@@ -70,6 +70,11 @@ if owner.pets:
     with col3:
         priority = st.selectbox("Priority", ["low", "medium", "high"], index=2)
 
+    category = st.selectbox(
+        "Task category",
+        ["general", "feeding", "medication", "walk", "grooming", "training"],
+        index=0,
+    )
     recurring = st.checkbox("Recurring task")
     preferred_start = st.number_input("Preferred start hour", min_value=0, max_value=23, value=8)
 
@@ -81,8 +86,10 @@ if owner.pets:
                 title=task_title,
                 duration_minutes=int(duration),
                 priority=priority,
+                category=category,
                 recurring=recurring,
                 preferred_start_hour=int(preferred_start),
+                pet_name=selected_pet.name,
             )
             selected_pet.add_task(task)
             st.success(f"Added {task.title} to {selected_pet.name}.")
@@ -131,12 +138,13 @@ if st.button("Generate schedule"):
     if not owner.get_all_tasks():
         st.warning("Add at least one task before generating a schedule.")
     else:
-        scheduler = Scheduler(day_start_hour=8, day_end_hour=20)
-        plan = scheduler.build_daily_plan(owner, owner.pets[0], owner.get_all_tasks())
-        conflicts = scheduler.detect_conflicts(plan.scheduled_tasks)
+        planner = PetCarePlanner(scheduler=Scheduler(day_start_hour=8, day_end_hour=20), knowledge_base=CareKnowledgeBase())
+        plan, trace, confidence = planner.plan(owner, owner.pets[0], owner.get_all_tasks())
         st.session_state.plan = plan
-        st.session_state.explanations = scheduler.explain_plan(plan)
-        st.session_state.conflicts = conflicts
+        st.session_state.explanations = planner.scheduler.explain_plan(plan)
+        st.session_state.conflicts = planner.scheduler.detect_conflicts(plan.scheduled_tasks)
+        st.session_state.trace = trace
+        st.session_state.confidence = confidence
 
 if "plan" in st.session_state:
     plan: DailyPlan = st.session_state.plan
@@ -167,6 +175,11 @@ if "plan" in st.session_state:
         for warning in st.session_state.conflicts:
             st.write(f"- {warning}")
 
+    st.metric("Planner confidence", f"{st.session_state.confidence:.2f}")
     st.subheader("Why this plan was chosen")
     for line in st.session_state.explanations:
         st.write(line)
+
+    with st.expander("Planner trace and AI reasoning"):
+        for line in st.session_state.trace:
+            st.write(f"- {line}")
