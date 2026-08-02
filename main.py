@@ -42,7 +42,7 @@ def main() -> None:
     print("\nRecurring task follow-up:")
     print(f"- {recurring_task.title} -> next occurrence: {next_occurrence.due_date if next_occurrence else 'none'}")
 
-    conflict_warning = scheduler.detect_conflicts([
+    conflict_warning = planner.scheduler.detect_conflicts([
         ScheduledTask(task=Task(title="Walk", duration_minutes=20, priority="high"), start_minute=480, end_minute=500, reason=""),
         ScheduledTask(task=Task(title="Feed", duration_minutes=10, priority="medium"), start_minute=480, end_minute=490, reason=""),
     ])

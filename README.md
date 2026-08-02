@@ -117,6 +117,20 @@ Test result:
 11 passed in 0.02s
 ```
 
+### Human evaluation
+
+| Test input | Evaluation criteria | Result |
+|------------|--------------------|--------|
+| 4 tasks incl. medication + walk at 08:00 | Medication scheduled first, confidence reported | Pass — Medication placed at 08:00, confidence 1.00 |
+| Owner with only 20 available minutes | Infeasible task skipped, not silently dropped | Pass — grooming skipped, confidence lowered |
+| Generate schedule with no tasks added | Handled gracefully, no crash | Pass — UI warns "Add at least one task" |
+| Empty pet name in UI | Rejected with a clear message | Pass — "Please enter a pet name" |
+
+**Summary:** 11/11 automated tests pass. Confidence averages ~1.0 on feasible
+plans and drops when tasks are skipped. The planner correctly prioritized
+safety-critical tasks in every human-reviewed case; the main limitation is that
+task categories are user-supplied, so a mislabeled category can misdirect a boost.
+
 ## Design decisions
 
 - I kept the AI component lightweight so the system remains reproducible without external APIs.
