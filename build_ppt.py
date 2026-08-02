@@ -1,7 +1,7 @@
 """Generate the PawPal+ demo deck following CodePath's "Engineer's Pitch" format:
 Problem -> Logic -> Reliability -> Reflection. Simple, first-person, 6 slides."""
 from pptx import Presentation
-from pptx.util import Inches, Pt
+from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
@@ -98,32 +98,42 @@ bullets(s, [
 # ============================================================ 3 — THE LOGIC
 s = prs.slides.add_slide(BLANK); bg(s, LIGHT)
 header(s, "The Logic — how the AI thinks", "It looks things up, then plans in steps", TEAL)
-text(s, Inches(1.0), Inches(2.05), Inches(11.3), Inches(0.5),
-     [("An agentic loop: retrieve → prioritize → plan → check → fix.", 17, MUTE, False)], gap=0)
+text(s, Inches(1.0), Inches(1.95), Inches(6.2), Inches(0.5),
+     [("An agentic loop: retrieve → prioritize → plan → check → fix.", 15, MUTE, False)], gap=0)
 
 
-def step_card(x, n, title, body):
-    rect(s, x, Inches(2.75), Inches(2.75), Inches(3.0), WHITE, MSO_SHAPE.ROUNDED_RECTANGLE)
-    rect(s, x, Inches(2.75), Inches(2.75), Inches(0.5), TEAL, MSO_SHAPE.ROUNDED_RECTANGLE)
-    text(s, x, Inches(2.78), Inches(2.75), Inches(0.44),
-         [(f"STEP {n}", 12, WHITE, True)], align=PP_ALIGN.CENTER, gap=0)
-    text(s, x + Inches(0.22), Inches(3.4), Inches(2.35), Inches(0.7),
-         [(title, 15, NAVY, True)], gap=0)
-    text(s, x + Inches(0.22), Inches(4.05), Inches(2.35), Inches(1.6),
-         [(body, 12.5, MUTE, False)], gap=0, ls=1.1)
+def step_row(y, n, title, body):
+    circ = rect(s, Inches(0.95), y, Inches(0.5), Inches(0.5), TEAL, MSO_SHAPE.OVAL)
+    cf = circ.text_frame; cf.paragraphs[0].alignment = PP_ALIGN.CENTER
+    cr = cf.paragraphs[0].add_run(); cr.text = n
+    cr.font.size = Pt(17); cr.font.bold = True; cr.font.color.rgb = WHITE
+    text(s, Inches(1.65), y - Inches(0.06), Inches(5.4), Inches(0.4),
+         [(title, 16, NAVY, True)], gap=0)
+    text(s, Inches(1.65), y + Inches(0.32), Inches(5.4), Inches(0.6),
+         [(body, 12.5, MUTE, False)], gap=0, ls=1.05)
 
 
-step_card(Inches(0.7), "1", "Look it up",
-          "Pulls care guidance for each task from a small knowledge base.")
-step_card(Inches(3.62), "2", "Prioritize",
-          "Boosts safety-first tasks: meds › feeding › walks › grooming.")
-step_card(Inches(6.54), "3", "Plan & check",
-          "Builds the day, then scans for time clashes and overlaps.")
-step_card(Inches(9.46), "4", "Fix & score",
-          "Resolves conflicts and reports a 0–1 confidence score.")
-text(s, Inches(1.0), Inches(6.05), Inches(11.3), Inches(0.6),
-     [("Every step is written to a trace, so you can read exactly why the plan came out that way.",
-       14, INK, False)], gap=0)
+step_row(Inches(2.55), "1", "Look it up",
+         "Pulls care guidance for each task from a small knowledge base.")
+step_row(Inches(3.55), "2", "Prioritize",
+         "Boosts safety-first tasks: meds › feeding › walks › grooming.")
+step_row(Inches(4.55), "3", "Plan & check",
+         "Builds the day, then scans for time clashes and overlaps.")
+step_row(Inches(5.55), "4", "Fix & score",
+         "Resolves conflicts and reports a 0–1 confidence score.")
+
+# right column — the live app, in a soft frame
+FRAME_X, FRAME_Y, FRAME_W = Inches(7.35), Inches(1.95), Inches(5.3)
+img_w = FRAME_W - Inches(0.2)
+img_h = Emu(int(img_w * 1248 / 1800))
+rect(s, FRAME_X, FRAME_Y, FRAME_W, img_h + Inches(0.65), WHITE, MSO_SHAPE.ROUNDED_RECTANGLE)
+text(s, FRAME_X + Inches(0.2), FRAME_Y + Inches(0.12), FRAME_W - Inches(0.4), Inches(0.35),
+     [("THE LIVE APP", 11, TEAL, True)], gap=0)
+s.shapes.add_picture("assets/app_screenshot.png",
+                     FRAME_X + Inches(0.1), FRAME_Y + Inches(0.5), width=img_w, height=img_h)
+text(s, Inches(1.0), Inches(6.55), Inches(6.2), Inches(0.6),
+     [("Every step is logged to a trace — you can read why the plan came out this way.",
+       12.5, INK, False)], gap=0, ls=1.05)
 
 # ============================================================ 4 — RELIABILITY
 s = prs.slides.add_slide(BLANK); bg(s, LIGHT)
